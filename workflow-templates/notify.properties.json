@@ -1,5 +1,5 @@
 {
     "name": "FlaCorp Notify Workflow",
     "description": "FlaCorp notify workflow template.",
-    "iconName": "notify-icon"
+    "iconName": "octicon person"
 }
