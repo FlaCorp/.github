@@ -1,0 +1,27 @@
+name: FlaCorp Template Notify
+
+on:
+  push:
+    branches: [ $default-branch ]
+    paths-ignore: [ .github/** ]
+  pull_request:
+    branches: [ $default-branch ]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    name: Submodule Notify Parent
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Workflow dispatch event
+      env:
+        PARENT_REPO: ${{ secrets.PARENT_REPO }}
+        PARENT_ID: ${{ secrets.PARENT_ID }}
+      run: |
+        curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.TOKEN }}" \
+          $GITHUB_API_URL/repos/$PARENT_REPO/actions/workflows/$PARENT_ID/dispatches \
+          -d '{"ref":"main"}'

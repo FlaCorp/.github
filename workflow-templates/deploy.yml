@@ -1,0 +1,39 @@
+name: FlaCorp Template CI
+
+on:
+  push:
+    branches: [ $default-branch ]
+    paths-ignore: [ .github/** ]
+  pull_request:
+    branches: [ $default-branch ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to remote server
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+      with:
+        ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
+
+    - name: Make envfile
+      uses: SpicyPizza/create-envfile@v1.2
+      with:
+        envkey_LEVEL: PRODUCTION
+        envkey_TEST: false
+        directory: submodule/deployment
+        file_name: .env
+
+    - name: Setup ssh private key
+      run: |
+        set -eu
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+        chmod 600 $HOME/.ssh/id_rsa
+
+    - name: Copy to remote server
+      run: rsync -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" --archive --compress --delete . ${{ secrets.REMOTE_HOST }}:/opt/action/
