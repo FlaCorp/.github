@@ -8,6 +8,9 @@ on:
     branches: [ $default-branch ]
   workflow_dispatch:
 
+env:
+  submodule: ''
+
 jobs:
   deploy:
     name: Deploy to remote server
@@ -24,21 +27,15 @@ jobs:
     - name: Make envfile
       uses: SpicyPizza/create-envfile@v1.2
       with:
-        envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        envkey_DEBUG: true
-        envkey_ALLOWED_HOSTS: "*"
-        envkey_LANGUAGE_CODE: en-us
-        envkey_TIME_ZONE: Europe/Moscow
-        envkey_CORS_ALLOW_ALL_ORIGINS: true
-        envkey_CORS_ALLOW_CREDENTIALS: true
-        envkey_USE_I18N: false
-        envkey_USE_L10N: true
         envkey_USE_TZ: false
-        envkey_AUTH_ADDRESS: http://${{ secrets.REMOTE_HOST }}:8001
-        envkey_CORE_ADDRESS: http://${{ secrets.REMOTE_HOST }}:8002
-        envkey_DATA_UPLOAD_MAX_MEMORY_SIZE: 251658240
-        envkey_FILE_UPLOAD_MAX_MEMORY_SIZE: 251658240
-        directory: submodule/deployment
+        envkey_USE_L10N: true
+        envkey_USE_I18N: false
+        envkey_TIME_ZONE: Europe/Moscow
+        envkey_LANGUAGE_CODE: en-us
+        envkey_ALLOWED_HOSTS: "*"
+        envkey_DEBUG: true
+        envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        directory: ${{ env.submodule }}/deployment
         file_name: .env
 
     - name: Build the Docker image
@@ -51,5 +48,10 @@ jobs:
         chmod 600 $HOME/.ssh/id_rsa
 
     - name: Copy to remote server
-      run: rsync -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" --archive --compress --delete $(cut -d '/' -f 2 <<< $GITHUB_REPOSITORY) ${{ secrets.REMOTE_HOST }}:/opt/
+      run: |
+        rsync -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+          --archive --compress --delete \
+          --exclude={"${{ env.submodule }}/", ".github/", "LICENSE", "*.md"} \
+          --include={".gitignore", "src/", "deployment/"} \
+          $(cut -d '/' -f 2 <<< $GITHUB_REPOSITORY) ${{ secrets.REMOTE_HOST }}:/opt/
       working-directory: ..
