@@ -49,9 +49,6 @@ jobs:
 
     - name: Copy to remote server
       run: |
-        rsync -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" \
-          --archive --compress --delete \
-          --exclude={"${{ env.submodule }}/", ".github/", "LICENSE", "*.md"} \
-          --include={".gitignore", "src/", "deployment/"} \
-          $(cut -d '/' -f 2 <<< $GITHUB_REPOSITORY) ${{ secrets.REMOTE_HOST }}:/opt/
-      working-directory: ..
+        rsync -avzr --del -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+        --exclude={"*/public/","*/*db*/"} \
+        . ${{ secrets.REMOTE_HOST }}:/opt/$(cut -d "/" -f 2 <<< $GITHUB_REPOSITORY)
