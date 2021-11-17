@@ -15,6 +15,7 @@ jobs:
         ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
         token: ${{ secrets.GITHUB_TOKEN }}
         submodules: recursive
+        fetch-depth: 0
 
     - name: Submodules update
       run: |
