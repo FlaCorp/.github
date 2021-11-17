@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 
 env:
+  repo: $(cut -d "/" -f 2 <<< $GITHUB_REPOSITORY)
   submodule: ''
 
 jobs:
@@ -51,4 +52,9 @@ jobs:
       run: |
         rsync -avzr --del -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" \
         --exclude={"*/public/","*/*db*/"} \
-        . ${{ secrets.REMOTE_HOST }}:/opt/$(cut -d "/" -f 2 <<< $GITHUB_REPOSITORY)
+        . ${{ secrets.REMOTE_HOST }}:/opt/${{ env.repo }}
+
+    - name: Up and restart containers
+      run: |
+        ssh ${{ secrets.REMOTE_HOST }} \
+        "cd /opt/${{ env.repo }} && ./deployment/scripts/up.sh | docker restart ${{ env.submodule }}_web"
