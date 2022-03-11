@@ -1,0 +1,44 @@
+
+name: CI
+
+on:
+  push:
+    branches: [$default-branch]
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+  pull_request:
+    branches: [$default-branch]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup ssh private key
+        run: |
+          mkdir $HOME/.ssh
+          chmod -R 700 $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+          chmod 600 $HOME/.ssh/id_rsa
+
+      - name: Build application
+        run: make ci
+
+      - name: Copy to remote server
+        run: |
+          rsync -avzr --delete-after -e "ssh -p 2222 -o StrictHostKeyChecking=no" \
+          . www@${{ secrets.DOMAIN }}:/var/www/${{ secrets.DOMAIN }}/html/
+        working-directory: dist
