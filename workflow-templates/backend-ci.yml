@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  repo: $(cut -d "/" -f 2 <<< $GITHUB_REPOSITORY)
+  repository: $(cut -d "/" -f 2 <<< $GITHUB_REPOSITORY)
 
 jobs:
   ci:
@@ -34,4 +34,4 @@ jobs:
       - name: Copy to remote server
         run: |
           rsync -avzr --delete-after -e "ssh -p 2222 -o StrictHostKeyChecking=no" \
-          . www@${{ secrets.DOMAIN }}:/opt/${{ env.repo }}
+          . www@${{ secrets.DOMAIN }}:/opt/${{ env.repository }}
